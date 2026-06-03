@@ -7,11 +7,11 @@ class App {
     init() {
         document.addEventListener("DOMContentLoaded", () => {
             this.bindEvents();
-            this.safeInitAuth();
+            this.safeInit();
         });
     }
 
-    safeInitAuth() {
+    safeInit() {
         try {
             if (typeof authManager !== "undefined") {
                 authManager.checkAuth();
@@ -19,6 +19,9 @@ class App {
         } catch (e) {
             console.error("Auth init error:", e);
         }
+
+        // первичная загрузка (если есть менеджеры)
+        this.refreshAll();
     }
 
     bindEvents() {
@@ -29,124 +32,96 @@ class App {
         const closeModal = document.querySelector(".close");
         const saleForm = document.getElementById("saleForm");
 
-        // LOGIN
-        if (loginBtn) {
-            loginBtn.addEventListener("click", () => {
-                const password = document.getElementById("passwordInput")?.value || "";
-                if (typeof authManager !== "undefined") {
-                    authManager.login(password);
-                }
-            });
-        }
+        loginBtn?.addEventListener("click", () => {
+            const password = document.getElementById("passwordInput")?.value || "";
 
-        // LOGOUT
-        if (logoutBtn) {
-            logoutBtn.addEventListener("click", () => {
-                if (typeof authManager !== "undefined") {
-                    authManager.logout();
-                }
-            });
-        }
+            if (typeof authManager !== "undefined") {
+                authManager.login(password);
+            }
+        });
 
-        // NAVIGATION
+        logoutBtn?.addEventListener("click", () => {
+            if (typeof authManager !== "undefined") {
+                authManager.logout();
+            }
+        });
+
         document.querySelectorAll(".nav-btn").forEach(btn => {
             btn.addEventListener("click", (e) => this.switchTab(e));
         });
 
-        // OPEN MODAL
-        if (saleBtn) {
-            saleBtn.addEventListener("click", () => {
-                document.getElementById("saleModal")?.classList.remove("hidden");
-            });
-        }
-
-        // CLOSE MODAL
-        if (closeModal) {
-            closeModal.addEventListener("click", () => {
-                document.getElementById("saleModal")?.classList.add("hidden");
-            });
-        }
-
-        // SALE FORM
-        if (saleForm) {
-            saleForm.addEventListener("submit", async (e) => {
-                e.preventDefault();
-
-                const saleData = {
-                    date: document.getElementById("saleDate")?.value || "",
-                    amount: Number(document.getElementById("saleAmount")?.value || 0),
-                    status: document.getElementById("saleStatus")?.value || "Полная",
-                    nightShift: document.getElementById("nightShift")?.checked || false,
-                    dialogLink: document.getElementById("dialogLink")?.value || ""
-                };
-
-                try {
-                    if (typeof salesManager !== "undefined") {
-                        await salesManager.addSale(saleData);
-                    }
-
-                    document.getElementById("saleModal")?.classList.add("hidden");
-                    saleForm.reset();
-
-                } catch (err) {
-                    console.error("Sale submit error:", err);
-                }
-            });
-        }
-
-        // OPTIONAL: ADD SUBSCRIPTION BUTTON (если появится)
-        document.getElementById("addSubscriptionBtn")?.addEventListener("click", async () => {
-            try {
-                await db.collection("subscriptions").add({
-                    clientNick: "Новый клиент",
-                    dialogLink: "",
-                    format: "2/6",
-                    firstPaymentDate: new Date().toISOString(),
-                    payments: {},
-                    status: "Активна"
-                });
-
-                if (typeof subscriptionsManager !== "undefined") {
-                    subscriptionsManager.loadSubscriptions();
-                }
-
-            } catch (e) {
-                console.error("Add subscription error:", e);
-            }
+        saleBtn?.addEventListener("click", () => {
+            document.getElementById("saleModal")?.classList.remove("hidden");
         });
 
-        // AUTO REFRESH
+        closeModal?.addEventListener("click", () => {
+            document.getElementById("saleModal")?.classList.add("hidden");
+        });
+
+        saleForm?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (typeof salesManager === "undefined") return;
+
+            const saleData = {
+                date: document.getElementById("saleDate")?.value,
+                amount: Number(document.getElementById("saleAmount")?.value || 0),
+                status: document.getElementById("saleStatus")?.value,
+                nightShift: document.getElementById("nightShift")?.checked,
+                dialogLink: document.getElementById("dialogLink")?.value
+            };
+
+            await salesManager.addSale(saleData);
+
+            document.getElementById("saleModal")?.classList.add("hidden");
+            saleForm.reset();
+        });
+
+        // автообновление
         setInterval(() => {
-
-            try {
-                dashboardManager?.updateStats();
-                salesManager?.loadSales();
-                subscriptionsManager?.loadSubscriptions();
-                salaryManager?.loadSalaryHistory();
-            } catch (e) {
-                console.error("Auto refresh error:", e);
-            }
-
+            this.refreshAll();
         }, 30000);
     }
 
-    switchTab(e) {
+    refreshAll() {
+        try {
+            if (typeof dashboardManager !== "undefined") {
+                dashboardManager.updateStats();
+            }
 
+            if (typeof salesManager !== "undefined") {
+                salesManager.loadSales();
+            }
+
+            if (typeof subscriptionsManager !== "undefined") {
+                subscriptionsManager.loadSubscriptions();
+            }
+
+            if (typeof salaryManager !== "undefined") {
+                salaryManager.loadSalaryHistory();
+            }
+
+        } catch (e) {
+            console.error("Auto refresh error:", e);
+        }
+    }
+
+    switchTab(e) {
         const tabName = e.target.dataset.tab;
-        if (!tabName) return;
 
         document.querySelectorAll(".tab-content")
             .forEach(t => t.classList.remove("active"));
 
-        document.getElementById(tabName)?.classList.add("active");
+        const tab = document.getElementById(tabName);
+        if (tab) tab.classList.add("active");
 
         document.querySelectorAll(".nav-btn")
             .forEach(b => b.classList.remove("active"));
 
         e.target.classList.add("active");
 
+        // обновление конкретной вкладки
         switch (tabName) {
-
             case "dashboard":
                 dashboardManager?.updateStats();
                 break;
@@ -162,7 +137,7 @@ class App {
             case "salary":
                 salaryManager?.loadSalaryHistory();
                 break;
-        }
+                }
     }
 }
 
