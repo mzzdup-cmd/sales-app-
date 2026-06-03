@@ -145,6 +145,20 @@ class App {
         }, 30000);
     }
 
+    document.getElementById("addSubscriptionBtn")?.addEventListener("click", async () => {
+
+    await db.collection("subscriptions").add({
+        clientNick: "Новый клиент",
+        dialogLink: "",
+        format: "2/6",
+        firstPaymentDate: new Date().toISOString(),
+        payments: {},
+        status: "Активна"
+    });
+
+    subscriptionsManager.loadSubscriptions();
+});
+
     switchTab(e) {
 
         const tabName =
