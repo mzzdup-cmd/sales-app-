@@ -10,6 +10,7 @@ class SalesManager {
             const salesByDay = {};
 
             snapshot.docs.forEach(doc => {
+
                 const sale = {
                     id: doc.id,
                     ...doc.data()
@@ -68,22 +69,27 @@ class SalesManager {
     }
 
     createSaleCard(sale) {
+
         return `
-            <div class="sale-card">
-                <p>💰 <strong>${this.formatCurrency(sale.amount || 0)}</strong></p>
-                <p>📌 Статус: ${sale.status || "-"}</p>
-                <p>🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}</p>
+        <div class="sale-card">
 
-                ${sale.dialogLink ? `
-                    <p>
-                        🔗 <a href="${sale.dialogLink}" target="_blank">Открыть диалог</a>
-                    </p>
-                ` : ""}
+            <p>💰 <strong>${this.formatCurrency(sale.amount || 0)}</strong></p>
 
-                <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">
-                    Удалить
-                </button>
-            </div>
+            <p>📌 Статус: ${sale.status || "-"}</p>
+
+            <p>🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}</p>
+
+            ${sale.dialogLink ? `
+                <p>
+                    🔗 <a href="${sale.dialogLink}" target="_blank">Открыть диалог</a>
+                </p>
+            ` : ""}
+
+            <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">
+                Удалить
+            </button>
+
+        </div>
         `;
     }
 
