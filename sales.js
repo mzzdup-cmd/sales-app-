@@ -179,13 +179,20 @@ async addSale(
 
     try {
 
-        await db
-            .collection("sales")
-            .add({
-                ...saleData,
-                createdAt:
-                new Date()
-            });
+        const docRef = await db.collection('sales').add(saleData);
+
+// если это подписка — создаём subscription
+if (saleData.status === "Подписная") {
+    await db.collection("subscriptions").add({
+        clientNick: "Клиент",
+        dialogLink: saleData.dialogLink || "",
+        format: "2/6",
+        firstPaymentDate: saleData.date,
+        payments: {},
+        status: "Активна",
+        sourceSaleId: docRef.id
+    });
+}
 
         await this.loadSales();
 
