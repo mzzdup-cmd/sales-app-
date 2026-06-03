@@ -38,6 +38,21 @@ class App {
             if (typeof authManager !== "undefined") {
                 authManager.login(password);
             }
+            const addSubscriptionBtn =
+    document.getElementById("addSubscriptionBtn");
+
+addSubscriptionBtn?.addEventListener("click", async () => {
+
+    await db.collection("subscriptions").add({
+        clientNick: "Новый клиент",
+        dialogLink: "",
+        format: "2/6",
+        firstPaymentDate: new Date().toISOString(),
+        payments: {},
+        status: "Активна"
+    });
+
+    subscriptionsManager.loadSubscriptions();
         });
 
         logoutBtn?.addEventListener("click", () => {
