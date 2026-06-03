@@ -259,4 +259,15 @@ canvas{
     width:auto;
     padding:12px 18px;
 }
+    #salaryChart {
+    max-height: 320px;
+}
+
+#salary .chart-box {
+    height: 320px;
+}
+
+canvas {
+    max-height: 300px !important;
+}
 }
