@@ -132,24 +132,22 @@
         </div>
     </div>
 
-    <!-- Сначала библиотеки -->
+    <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Затем конфиг (обязательно ДО app.js!) -->
+<!-- Firebase config (ПЕРВЫМ) -->
 <script src="firebase-config.js"></script>
 
-<!-- Модули приложения -->
-
+<!-- Модули (СТРОГО В ЭТОМ ПОРЯДКЕ) -->
 <script src="auth.js"></script>
 <script src="dashboard.js"></script>
 <script src="sales.js"></script>
 <script src="subscriptions.js"></script>
 <script src="salary.js"></script>
 
-<!-- Инициализация -->
-
+<!-- App (ПОСЛЕДНИМ) -->
 <script src="app.js"></script>
 
 </body>
