@@ -1,92 +1,181 @@
 class App {
+
     constructor() {
-        this.initEventListeners();
+
+        this.initEvents();
+
         authManager.checkAuth();
     }
 
-    initEventListeners() {
-        // Аутентификация
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            const password = document.getElementById('passwordInput').value;
-            authManager.login(password);
-        });
+    initEvents() {
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            authManager.logout();
-        });
+        // Вход
+
+        document
+            .getElementById("loginBtn")
+            .addEventListener("click", () => {
+
+                const password =
+                    document.getElementById(
+                        "passwordInput"
+                    ).value;
+
+                authManager.login(password);
+
+            });
+
+        // Enter
+
+        document
+            .getElementById("passwordInput")
+            .addEventListener("keypress", e => {
+
+                if (e.key === "Enter") {
+
+                    document
+                        .getElementById("loginBtn")
+                        .click();
+                }
+
+            });
+
+        // Выход
+
+        document
+            .getElementById("logoutBtn")
+            .addEventListener("click", () => {
+
+                authManager.logout();
+
+            });
 
         // Навигация
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
+
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(btn => {
+
+                btn.addEventListener("click", () => {
+
+                    this.switchTab(
+                        btn.dataset.tab,
+                        btn
+                    );
+
+                });
+
             });
-        });
 
-        // Продажи
-        document.getElementById('addSaleBtn').addEventListener('click', () => {
-            document.getElementById('saleModal').classList.remove('hidden');
-        });
+        // Продажа
 
-        document.querySelector('.close').addEventListener('click', () => {
-            document.getElementById('saleModal').classList.add('hidden');
-        });
+        document
+            .getElementById("addSaleBtn")
+            .addEventListener("click", () => {
 
-        document.getElementById('saleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const saleData = {
-                date: document.getElementById('saleDate').value,
-                amount: parseFloat(document.getElementById('saleAmount').value),
-                status: document.getElementById('saleStatus').value,
-                nightShift: document.getElementById('nightShift').checked,
-                dialogLink: document.getElementById('dialogLink').value
-            };
+                document
+                    .getElementById("saleModal")
+                    .classList.remove("hidden");
 
-            await salesManager.addSale(saleData);
-            document.getElementById('saleModal').classList.add('hidden');
-            document.getElementById('saleForm').reset();
-        });
+            });
 
-        // Автообновление данных каждые 30 секунд
-        setInterval(() => {
-            dashboardManager.updateStats();
-            salesManager.loadSales();
-            subscriptionsManager.loadSubscriptions();
-            salaryManager.loadSalaryHistory();
-        }, 30000);
+        // Закрытие модалки
+
+        document
+            .querySelector(".close")
+            .addEventListener("click", () => {
+
+                document
+                    .getElementById("saleModal")
+                    .classList.add("hidden");
+
+            });
+
+        // Сохранение продажи
+
+        document
+            .getElementById("saleForm")
+            .addEventListener("submit", async e => {
+
+                e.preventDefault();
+
+                const saleData = {
+
+                    date:
+                        document.getElementById("saleDate").value,
+
+                    amount:
+                        Number(
+                            document.getElementById("saleAmount").value
+                        ),
+
+                    status:
+                        document.getElementById("saleStatus").value,
+
+                    nightShift:
+                        document.getElementById("nightShift").checked,
+
+                    dialogLink:
+                        document.getElementById("dialogLink").value
+
+                };
+
+                await salesManager.addSale(saleData);
+
+                document
+                    .getElementById("saleModal")
+                    .classList.add("hidden");
+
+                document
+                    .getElementById("saleForm")
+                    .reset();
+
+            });
+
     }
 
-    switchTab(tabName) {
-        // Скрыть все вкладки
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
+    switchTab(tabName, button) {
 
-        // Показать выбранную вкладку
-        document.getElementById(tabName).classList.add('active');
+        document
+            .querySelectorAll(".tab-content")
+            .forEach(tab => {
 
-        // Обновить активную кнопку навигации
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
+                tab.classList.remove("active");
 
-        // Загрузить данные для вкладки
+            });
+
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(btn => {
+
+                btn.classList.remove("active");
+
+            });
+
+        document
+            .getElementById(tabName)
+            .classList.add("active");
+
+        button.classList.add("active");
+
         switch (tabName) {
-            case 'dashboard':
+
+            case "dashboard":
                 dashboardManager.updateStats();
                 break;
-            case 'sales':
+
+            case "sales":
                 salesManager.loadSales();
                 break;
-            case 'subscriptions':
+
+            case "subscriptions":
                 subscriptionsManager.loadSubscriptions();
                 break;
-            case 'salary':
+
+            case "salary":
                 salaryManager.loadSalaryHistory();
                 break;
         }
     }
 }
 
-// Инициализация приложения
-const app = new App();
+const salesTrackerApp = new App();
