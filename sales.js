@@ -10,7 +10,6 @@ class SalesManager {
             const salesByDay = {};
 
             snapshot.docs.forEach(doc => {
-
                 const sale = {
                     id: doc.id,
                     ...doc.data()
@@ -33,7 +32,6 @@ class SalesManager {
     }
 
     renderSales(salesByDay) {
-
         const container = document.getElementById("salesList");
         if (!container) return;
 
@@ -42,12 +40,15 @@ class SalesManager {
         const dates = Object.keys(salesByDay);
 
         if (!dates.length) {
-            container.innerHTML = <div class="sale-card">Продаж пока нет</div>;
+            container.innerHTML = `
+                <div class="sale-card">
+                    Продаж пока нет
+                </div>
+            `;
             return;
         }
 
         dates.forEach(date => {
-
             const sales = salesByDay[date];
 
             const block = document.createElement("div");
@@ -69,35 +70,40 @@ class SalesManager {
     }
 
     createSaleCard(sale) {
-
         return `
-        <div class="sale-card">
+            <div class="sale-card">
 
-            <p>💰 <strong>${this.formatCurrency(sale.amount || 0)}</strong></p>
-
-            <p>📌 Статус: ${sale.status || "-"}</p>
-
-            <p>🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}</p>
-
-            ${sale.dialogLink ? `
                 <p>
-                    🔗 <a href="${sale.dialogLink}" target="_blank">Открыть диалог</a>
+                    💰 <strong>${this.formatCurrency(sale.amount || 0)}</strong>
                 </p>
-            ` : ""}
 
-            <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">
-                Удалить
-            </button>
+                <p>
+                    📌 Статус: ${sale.status || "-"}
+                </p>
 
-        </div>
+                <p>
+                    🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}
+                </p>
+
+                ${
+                    sale.dialogLink
+                        ? <p>🔗 <a href="${sale.dialogLink}" target="_blank">Открыть диалог</a></p>
+                        : ""
+                }
+
+                <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">
+                    Удалить
+                </button>
+
+            </div>
         `;
     }
 
     async addSale(saleData) {
-
         try {
             const docRef = await db.collection("sales").add(saleData);
 
+            // если подписка
             if (saleData.status === "Подписная") {
                 await db.collection("subscriptions").add({
                     clientNick: "Клиент",
@@ -118,21 +124,27 @@ class SalesManager {
         }
     }
 
-    async deleteSale(id) {
+    async deleteSale(saleId) {
+        const confirmed = confirm("Удалить продажу?");
+        if (!confirmed) return;
 
-        if (!confirm("Удалить продажу?")) return;
+        try {
+            await db.collection("sales").doc(saleId).delete();
 
-        await db.collection("sales").doc(id).delete();
+            await this.loadSales();
+            dashboardManager.updateStats();
 
-        this.loadSales();
-        dashboardManager.updateStats();
+        } catch (error) {
+            console.error("Ошибка удаления:", error);
+        }
     }
 
     formatCurrency(amount) {
         return new Intl.NumberFormat("ru-RU", {
             style: "currency",
-            currency: "RUB"
-        }).format(amount || 0);
+            currency: "RUB",
+            minimumFractionDigits: 0
+        }).format(amount);
     }
 }
 
