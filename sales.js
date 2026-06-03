@@ -1,87 +1,265 @@
 class SalesManager {
-    async loadSales() {
-        const snapshot = await db.collection('sales').orderBy('date', 'desc').get();
+async loadSales() {
+
+    try {
+
+        const snapshot =
+            await db
+                .collection("sales")
+                .orderBy("date", "desc")
+                .get();
+
         const salesByDay = {};
 
         snapshot.docs.forEach(doc => {
-            const sale = doc.data();
-            const date = new Date(sale.date).toLocaleDateString();
+
+            const sale = {
+                id: doc.id,
+                ...doc.data()
+            };
+
+            const date =
+                sale.date || "Без даты";
 
             if (!salesByDay[date]) {
                 salesByDay[date] = [];
             }
-            salesByDay[date].push({ ...sale, id: doc.id });
+
+            salesByDay[date].push(sale);
         });
 
-        this.displaySalesByDay(salesByDay);
-    }
+        this.renderSales(
+            salesByDay
+        );
 
-    displaySalesByDay(salesByDay) {
-        const container = document.getElementById('salesList');
-        container.innerHTML = '';
+    } catch (error) {
 
-        Object.keys(salesByDay).forEach(date => {
-            const daySales = salesByDay[date];
-            const dayElement = document.createElement('div');
-            dayElement.className = 'sales-day';
-
-            dayElement.innerHTML = `
-                <div class="day-header" onclick="toggleDay('${date}')">
-                    <span>${date}</span>
-                    <span>▼</span>
-                </div>
-                <div id="day-${date}" class="day-sales hidden">
-                    ${daySales.map(sale => this.createSaleCard(sale)).join('')}
-                </div>`;
-
-            container.appendChild(dayElement);
-        });
-    }
-
-    createSaleCard(sale) {
-        return `
-            <div class="sale-card">
-                <div>
-                    <strong>Сумма:</strong> ${this.formatCurrency(sale.amount)}
-                </div>
-                <div>
-                    <strong>Статус:</strong> ${sale.status}
-                </div>
-                <div>
-                    <strong>Ночная смена:</strong> ${sale.nightShift ? 'Да' : 'Нет'}
-                </div>
-                ${sale.dialogLink ? `<div><strong>Ссылка:</strong> <a href="${sale.dialogLink}" target="_blank">Перейти</a></div>` : ''}
-                <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">Удалить</button>
-            </div>`;
-    }
-
-    async addSale(saleData) {
-        await db.collection('sales').add(saleData);
-        await this.loadSales();
-        dashboardManager.updateStats();
-    }
-
-    async deleteSale(saleId) {
-        if (confirm('Удалить продажу?')) {
-            await db.collection('sales').doc(saleId).delete();
-            await this.loadSales();
-            dashboardManager.updateStats();
-        }
-    }
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('ru-RU', {
-            style: 'currency',
-            currency: 'RUB',
-            minimumFractionDigits: 0
-        }).format(amount);
+        console.error(
+            "Ошибка загрузки продаж:",
+            error
+        );
     }
 }
 
-const salesManager = new SalesManager();
+renderSales(
+    salesByDay
+) {
 
-// Функция для переключения видимости дня
-function toggleDay(date) {
-    const dayElement = document.getElementById(`day-${date}`);
-    dayElement.classList.toggle('hidden');
+    const container =
+        document.getElementById(
+            "salesList"
+        );
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const dates =
+        Object.keys(
+            salesByDay
+        );
+
+    if (!dates.length) {
+
+        container.innerHTML =
+            `
+            <div class="sale-card">
+                Продаж пока нет
+            </div>
+            `;
+
+        return;
+    }
+
+    dates.forEach(date => {
+
+        const sales =
+            salesByDay[date];
+
+        const block =
+            document.createElement(
+                "div"
+            );
+
+        block.className =
+            "sales-day";
+
+        block.innerHTML =
+            `
+            <div
+                class="day-header"
+                onclick="toggleDay('${date}')"
+            >
+                <span>${date}</span>
+                <span>▼</span>
+            </div>
+
+            <div
+                id="day-${date}"
+                class="day-sales hidden"
+            >
+
+                ${sales.map(
+                    sale =>
+                    this.createSaleCard(
+                        sale
+                    )
+                ).join("")}
+
+            </div>
+            `;
+
+        container.appendChild(
+            block
+        );
+
+    });
+}
+
+createSaleCard(
+    sale
+) {
+
+    return `
+    <div class="sale-card">
+
+        <p>
+            💰
+            <strong>
+                ${this.formatCurrency(
+                    sale.amount || 0
+                )}
+            </strong>
+        </p>
+
+        <p>
+            📌 Статус:
+            ${sale.status || "-"}
+        </p>
+
+        <p>
+            🌙 Ночная:
+            ${sale.nightShift
+                ? "Да"
+                : "Нет"}
+        </p>
+
+        ${
+            sale.dialogLink
+            ?
+            `
+            <p>
+                🔗
+                <a
+                    href="${sale.dialogLink}"
+                    target="_blank"
+                >
+                    Открыть диалог
+                </a>
+            </p>
+            `
+            :
+            ""
+        }
+
+        <button
+            class="delete-btn"
+            onclick="salesManager.deleteSale('${sale.id}')"
+        >
+            Удалить
+        </button>
+
+    </div>
+    `;
+}
+
+async addSale(
+    saleData
+) {
+
+    try {
+
+        await db
+            .collection("sales")
+            .add({
+                ...saleData,
+                createdAt:
+                new Date()
+            });
+
+        await this.loadSales();
+
+        dashboardManager.updateStats();
+
+    } catch (error) {
+
+        console.error(
+            "Ошибка сохранения:",
+            error
+        );
+    }
+}
+
+async deleteSale(
+    saleId
+) {
+
+    const confirmed =
+        confirm(
+            "Удалить продажу?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        await db
+            .collection("sales")
+            .doc(saleId)
+            .delete();
+
+        await this.loadSales();
+
+        dashboardManager.updateStats();
+
+    } catch (error) {
+
+        console.error(
+            "Ошибка удаления:",
+            error
+        );
+    }
+}
+
+formatCurrency(
+    amount
+) {
+
+    return new Intl.NumberFormat(
+        "ru-RU",
+        {
+            style: "currency",
+            currency: "RUB",
+            minimumFractionDigits: 0
+        }
+    ).format(amount);
+}
+}
+const salesManager =
+new SalesManager();
+function toggleDay(
+date
+) {
+const element =
+    document.getElementById(
+        `day-${date}`
+    );
+
+if (!element) return;
+
+element.classList.toggle(
+    "hidden"
+);
 }
