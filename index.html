@@ -132,15 +132,21 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
-    <script src="dashboard.js"></script>
-    <script src="sales.js"></script>
-    <script src="subscriptions.js"></script>
-    <script src="salary.js"></script>
-    <script src="app.js"></script>
+    <!-- Сначала библиотеки -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Затем конфиг (обязательно ДО app.js!) -->
+<script src="firebase-config.js"></script>
+
+<!-- Потом модули -->
+<script src="auth.js"></script>
+<script src="dashboard.js"></script>
+<!-- ... остальные -->
+
+<!-- В самом конце — инициализация приложения -->
+<script src="app.js"></script>
+
 </body>
 </html>
