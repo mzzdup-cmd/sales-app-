@@ -11,12 +11,11 @@ class DashboardManager {
             { threshold: 800000, bonus: 10000 }
         ];
 
-        this.planChartInstance = null;
-        this.salesChartInstance = null;
+        this.planChart = null;
+        this.salesChart = null;
     }
 
     async updateStats() {
-
         const sales = await this.getSalesForCurrentMonth();
 
         const totalRevenue = sales.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -27,46 +26,53 @@ class DashboardManager {
 
         const commission = totalRevenue * this.commissionRate;
         const bonus = this.calculateBonuses(totalRevenue, nightShifts);
+        const currentSalary = this.baseSalary + commission + bonus;
 
-        const currentSalary =
-            this.baseSalary + commission + bonus;
+        document.getElementById("totalRevenue").textContent =
+            this.formatCurrency(totalRevenue);
 
-        // UI
-        this.setText("totalRevenue", this.formatCurrency(totalRevenue));
-        this.setText("planProgress", `${planProgress.toFixed(1)}%`);
-        this.setText("remainingToPlan", this.formatCurrency(remainingToPlan));
-        this.setText("salaryForecast", this.formatCurrency(currentSalary));
-        this.setText("currentSalary", this.formatCurrency(currentSalary));
+        document.getElementById("planProgress").textContent =
+            planProgress.toFixed(1) + "%";
+
+        document.getElementById("remainingToPlan").textContent =
+            this.formatCurrency(remainingToPlan);
+
+        document.getElementById("salaryForecast").textContent =
+            this.formatCurrency(currentSalary);
+
+        document.getElementById("currentSalary").textContent =
+            this.formatCurrency(currentSalary);
 
         const fullPlanSalary =
             this.baseSalary +
             (this.planAmount * this.commissionRate) +
             this.calculateBonuses(this.planAmount, nightShifts);
 
-        this.setText("fullPlanSalary", this.formatCurrency(fullPlanSalary));
+        document.getElementById("fullPlanSalary").textContent =
+            this.formatCurrency(fullPlanSalary);
 
         const nextBonus = this.bonusThresholds.find(b => totalRevenue < b.threshold);
 
-        if (nextBonus) {
-            this.setText(
-                "bonusProgress",
-                this.formatCurrency(nextBonus.threshold - totalRevenue)
-            );
-        } else {
-            this.setText("bonusProgress", "Все бонусы получены");
-        }
+        document.getElementById("bonusProgress").textContent =
+            nextBonus
+                ? this.formatCurrency(nextBonus.threshold - totalRevenue)
+                : "Все бонусы получены";
 
         this.updateCharts(sales, planProgress);
-        this.updateSalaryForecast(totalRevenue, sales);
     }
 
-    setText(id, value) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value;
+    async getSalesForCurrentMonth() {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const snapshot = await db.collection("sales")
+            .where("date", ">=", startOfMonth.toISOString().split("T")[0])
+            .get();
+
+        return snapshot.docs.map(doc => doc.data());
     }
 
     calculateBonuses(revenue, nightShifts) {
-
         let bonus = nightShifts * this.nightShiftBonus;
 
         for (const b of this.bonusThresholds) {
@@ -78,124 +84,70 @@ class DashboardManager {
         return bonus;
     }
 
-    async getSalesForCurrentMonth() {
-
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        const snapshot = await db.collection('sales')
-            .where('date', '>=', start.toISOString())
-            .get();
-
-        return snapshot.docs.map(d => d.data());
-    }
-
     updateCharts(sales, planProgress) {
 
-        // DESTROY OLD CHARTS (ВАЖНО)
-        if (this.planChartInstance) {
-            this.planChartInstance.destroy();
-        }
-
-        if (this.salesChartInstance) {
-            this.salesChartInstance.destroy();
-        }
-
-        // PLAN CHART
         const planCtx = document.getElementById("planChart");
-        if (planCtx) {
-
-            this.planChartInstance = new Chart(planCtx, {
-                type: "doughnut",
-                data: {
-                    labels: ["Выполнено", "Осталось"],
-                    datasets: [{
-                        data: [planProgress, 100 - planProgress],
-                        backgroundColor: ["#4a6cf7", "#e2e8f0"]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        // SALES CHART
-        const grouped = this.groupByDay(sales);
-
-        const labels = Object.keys(grouped);
-        const values = Object.values(grouped);
-
         const salesCtx = document.getElementById("salesChart");
 
-        if (salesCtx) {
+        if (!planCtx || !salesCtx) return;
 
-            this.salesChartInstance = new Chart(salesCtx, {
-                type: "line",
-                data: {
-                    labels,
-                    datasets: [{
-                        label: "Продажи",
-                        data: values,
-                        borderColor: "#4a6cf7",
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
+        // destroy старые графики (ВАЖНО!)
+        if (this.planChart) this.planChart.destroy();
+        if (this.salesChart) this.salesChart.destroy();
+
+        this.planChart = new Chart(planCtx, {
+            type: "doughnut",
+            data: {
+                labels: ["Выполнено", "Осталось"],
+                datasets: [{
+                    data: [planProgress, 100 - planProgress],
+                    backgroundColor: ["#4a6cf7", "#e2e8f0"]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const daily = this.groupByDay(sales);
+
+        this.salesChart = new Chart(salesCtx, {
+            type: "line",
+            data: {
+                labels: Object.keys(daily),
+                datasets: [{
+                    label: "Продажи",
+                    data: Object.values(daily),
+                    borderColor: "#4a6cf7",
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
     }
 
     groupByDay(sales) {
-
-        const map = {};
+        const result = {};
 
         sales.forEach(s => {
+            const key = new Date(s.date).toLocaleDateString();
 
-            const d = new Date(s.date).toLocaleDateString();
-
-            map[d] = (map[d]  0) + (s.amount  0);
+            if (!result[key]) result[key] = 0;
+            result[key] += s.amount || 0;
         });
 
-        return map;
-    }
-
-    updateSalaryForecast(totalRevenue, sales) {
-
-        const forecastBlock = document.querySelector(".salary-forecast");
-        if (!forecastBlock) return;
-
-        const today = new Date();
-        const days = today.getDate();
-
-        const avg = days > 0 ? totalRevenue / days : 0;
-
-        const todaySales = sales
-            .filter(s => new Date(s.date).toDateString() === today.toDateString())
-            .reduce((sum, s) => sum + (s.amount || 0), 0);
-
-        const weekSales = sales
-            .filter(s => new Date(s.date) >= new Date(Date.now() - 7 * 86400000))
-            .reduce((sum, s) => sum + (s.amount || 0), 0);
-
-        forecastBlock.innerHTML = `
-            <h3>Моя зарплата</h3>
-
-            <p>Сегодня: ${this.formatCurrency(todaySales)}</p>
-            <p>Неделя: ${this.formatCurrency(weekSales)}</p>
-            <p>Среднее в день: ${this.formatCurrency(avg)}</p>
-        `;
+        return result;
     }
 
     formatCurrency(amount) {
-
         return new Intl.NumberFormat("ru-RU", {
             style: "currency",
-            currency: "RUB"
+            currency: "RUB",
+            minimumFractionDigits: 0
         }).format(amount || 0);
     }
 }
