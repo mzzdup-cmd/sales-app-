@@ -1,99 +1,179 @@
 class SubscriptionsManager {
+
     async loadSubscriptions() {
-        const snapshot = await db.collection('subscriptions').get();
-        const tableBody = document.querySelector('#subscriptionsTable tbody');
-        tableBody.innerHTML = '';
 
-        let activeCount = 0;
-        let completedCount = 0;
-        let lostCount = 0;
-        let futurePayments = 0;
+        try {
 
-        snapshot.docs.forEach(doc => {
-            const subscription = doc.data();
-            const row = this.createSubscriptionRow(subscription);
-            tableBody.appendChild(row);
+            const snapshot =
+                await db.collection('subscriptions').get();
 
-            // Подсчёт статистики
-            switch (subscription.status) {
-                case 'Активна':
-                    activeCount++;
-                    break;
-                case 'Оплачено':
-                    completedCount++;
-                    break;
-                case 'Слив':
-                    lostCount++;
-                    break;
-            }
+            const tableBody =
+                document.querySelector('#subscriptionsTable tbody');
 
-            // Расчёт будущих платежей
-            if (subscription.status === 'Активна') {
-                futurePayments += this.calculateFuturePayments(subscription);
-            }
-        });
+            if (!tableBody) return;
 
-        this.updateSubscriptionStats(activeCount, completedCount, lostCount, futurePayments);
+            tableBody.innerHTML = '';
+
+            let activeCount = 0;
+            let completedCount = 0;
+            let lostCount = 0;
+            let futurePayments = 0;
+
+            snapshot.docs.forEach(doc => {
+
+                const subscription = {
+                    id: doc.id,
+                    ...doc.data()
+                };
+
+                const row =
+                    this.createSubscriptionRow(subscription);
+
+                tableBody.appendChild(row);
+
+                switch (subscription.status) {
+
+                    case 'Активна':
+                        activeCount++;
+                        break;
+
+                    case 'Оплачено':
+                        completedCount++;
+                        break;
+
+                    case 'Слив':
+                        lostCount++;
+                        break;
+                }
+
+                if (subscription.status === 'Активна') {
+
+                    futurePayments +=
+                        this.calculateFuturePayments(subscription);
+                }
+            });
+
+            this.updateSubscriptionStats(
+                activeCount,
+                completedCount,
+                lostCount,
+                futurePayments
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Subscriptions error:",
+                error
+            );
+        }
     }
 
     createSubscriptionRow(subscription) {
+
         const tr = document.createElement('tr');
 
-        // Расчёт дат платежей
-        const paymentDates = this.calculatePaymentDates(subscription.firstPaymentDate);
+        const paymentDates =
+            this.calculatePaymentDates(
+                subscription.firstPaymentDate
+            );
+
+        const payments =
+            subscription.payments || {};
 
         tr.innerHTML = `
-            <td><a href="${subscription.dialogLink}" target="_blank">Ссылка</a></td>
-            <td>${subscription.clientNick}</td>
             <td>
-                <select class="format-select" onchange="subscriptionsManager.updateSubscriptionFormat('${subscription.id}', this.value)">
+                <a href="${subscription.dialogLink || '#'}" target="_blank">
+                    Диалог
+                </a>
+            </td>
+
+            <td>
+                ${subscription.clientNick || '-'}
+            </td>
+
+            <td>
+                <select onchange="subscriptionsManager.updateSubscriptionFormat('${subscription.id}', this.value)">
                     <option value="2/6" ${subscription.format === '2/6' ? 'selected' : ''}>2/6</option>
-            <option value="4/12" ${subscription.format === '4/12' ? 'selected' : ''}>4/12</option>
-            <option value="5.5/22" ${subscription.format === '5.5/22' ? 'selected' : ''}>5.5/22</option>
-            <option value="7/28" ${subscription.format === '7/28' ? 'selected' : ''}>7/28</option>
-            <option value="5/20" ${subscription.format === '5/20' ? 'selected' : ''}>5/20</option>
-        </select>
+                    <option value="4/12" ${subscription.format === '4/12' ? 'selected' : ''}>4/12</option>
+                    <option value="5.5/22" ${subscription.format === '5.5/22' ? 'selected' : ''}>5.5/22</option>
+                    <option value="7/28" ${subscription.format === '7/28' ? 'selected' : ''}>7/28</option>
+                    <option value="5/20" ${subscription.format === '5/20' ? 'selected' : ''}>5/20</option>
+                </select>
             </td>
-            <td>${new Date(subscription.firstPaymentDate).toLocaleDateString()}</td>
+
             <td>
-                ${paymentDates.map((date, index) => `
-                    <div>
-                <label>
-                    <input type="checkbox"
-                           onchange="subscriptionsManager.togglePayment('${subscription.id}', ${index + 1}, this.checked)"
-                           ${subscription.payments?.[`payment${index + 1}`] ? 'checked' : ''}>
-                    Платеж ${index + 2} (${date.toLocaleDateString()})
-                </label>
-            </div>
-        `).join('')}
+                ${
+                    subscription.firstPaymentDate
+                        ? new Date(subscription.firstPaymentDate).toLocaleDateString()
+                        : '-'
+                }
             </td>
-            <td class="status-${subscription.status.toLowerCase()}">${subscription.status}</td>`;
+
+            <td>
+                ${paymentDates.map((date, index) => {
+
+                    const key = payment${index + 1};
+
+                    const isPaid = payments[key];
+
+                    return `
+                        <div>
+                            <label>
+                                <input type="checkbox"
+                                    onchange="subscriptionsManager.togglePayment('${subscription.id}', ${index + 1}, this.checked)"
+                                    ${isPaid ? 'checked' : ''}>
+                                Платёж ${index + 2}
+                                (${date.toLocaleDateString()})
+                            </label>
+                        </div>
+                    `;
+                }).join('')}
+            </td>
+
+            <td class="status">
+                ${subscription.status || 'Активна'}
+            </td>
+            `;
 
         return tr;
     }
 
     calculatePaymentDates(firstPaymentDate) {
-        const dates = [];
-        const startDate = new Date(firstPaymentDate);
 
-        for (let i = 1; i < 4; i++) {
-            const nextDate = new Date(startDate);
-            nextDate.setDate(startDate.getDate() + i * 14);
-            dates.push(nextDate);
+        if (!firstPaymentDate) return [];
+
+        const dates = [];
+        const start = new Date(firstPaymentDate);
+
+        for (let i = 1; i <= 3; i++) {
+
+            const d = new Date(start);
+            d.setDate(start.getDate() + i * 14);
+
+            dates.push(d);
         }
 
         return dates;
     }
 
     calculateFuturePayments(subscription) {
-        let total = 0;
-        const formatParts = subscription.format.split('/');
-        const paymentAmount = parseFloat(formatParts[0]);
 
-        // Считаем неоплаченные платежи
+        let total = 0;
+
+        const format =
+            (subscription.format || "0/0").split('/');
+
+        const paymentAmount =
+            parseFloat(format[0]) || 0;
+
+        const payments =
+            subscription.payments || {};
+
         for (let i = 1; i <= 3; i++) {
-            if (!subscription.payments?.[`payment${i}`]) {
-                total += paymentAmount * 1000; // Предполагаем, что формат в тысячах рублей
+
+            if (!payments[`payment${i}`]) {
+                total += paymentAmount * 1000;
             }
         }
 
@@ -101,68 +181,114 @@ class SubscriptionsManager {
     }
 
     updateSubscriptionStats(active, completed, lost, future) {
-        document.querySelector('.subscription-stats').innerHTML = `
-            <p>Активных: ${active}</p>
-            <p>Завершенных: ${completed}</p>
-            <p>Сливов: ${lost}</p>
-            <p>Ожидаемая сумма: ${this.formatCurrency(future)}</p>`;
+
+        const el =
+            document.querySelector('.subscription-stats');
+
+        if (!el) return;
+
+        el.innerHTML = `
+            <div class="stat-card">
+                <h3>Активные</h3>
+                <p>${active}</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Оплачено</h3>
+                <p>${completed}</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Слив</h3>
+                <p>${lost}</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Ожидаемая сумма</h3>
+                <p>${this.formatCurrency(future)}</p>
+            </div>
+        `;
     }
 
     async togglePayment(subscriptionId, paymentNumber, isPaid) {
+
         await db.collection('subscriptions')
             .doc(subscriptionId)
             .update({
                 [`payments.payment${paymentNumber}`]: isPaid
             });
+
         await this.checkSubscriptionStatus(subscriptionId);
         await this.loadSubscriptions();
     }
 
-        async checkSubscriptionStatus(subscriptionId) {
-        const doc = await db.collection('subscriptions').doc(subscriptionId).get();
-        const subscription = doc.data();
+    async checkSubscriptionStatus(subscriptionId) {
 
-        // Проверка всех платежей
-        const allPaid = Object.values(subscription.payments || {}).every(paid => paid);
-
-        if (allPaid) {
+        const doc =
             await db.collection('subscriptions')
                 .doc(subscriptionId)
-                .update({ status: 'Оплачено' });
-        } else {
-            // Проверка просроченных платежей
-            const today = new Date();
-            const paymentDates = this.calculatePaymentDates(subscription.firstPaymentDate);
+                .get();
 
-            for (let i = 0; i < paymentDates.length; i++) {
-                const paymentNum = i + 1;
-                const isPaid = subscription.payments?.[`payment${paymentNum}`];
-                const dueDate = paymentDates[i];
+        const subscription = doc.data();
 
-                if (!isPaid && dueDate < today) {
-                    await db.collection('subscriptions')
-                        .doc(subscriptionId)
-                        .update({ status: 'Слив' });
-                    break;
-                }
+        const payments =
+            subscription.payments || {};
+
+        const allPaid =
+            Object.values(payments).every(v => v);
+
+        if (allPaid && Object.keys(payments).length > 0) {
+
+            await db.collection('subscriptions')
+                .doc(subscriptionId)
+                .update({
+                    status: 'Оплачено'
+                });
+
+            return;
+        }
+
+        const today = new Date();
+        const dates =
+            this.calculatePaymentDates(subscription.firstPaymentDate);
+
+        for (let i = 0; i < dates.length; i++) {
+
+            const key = payment${i + 1};
+
+            if (!payments[key] && dates[i] < today) {
+
+                await db.collection('subscriptions')
+                    .doc(subscriptionId)
+                    .update({
+                        status: 'Слив'
+                    });
+
+                break;
             }
         }
     }
 
     async updateSubscriptionFormat(subscriptionId, newFormat) {
+
         await db.collection('subscriptions')
             .doc(subscriptionId)
-            .update({ format: newFormat });
+            .update({
+                format: newFormat
+            });
+
         await this.loadSubscriptions();
     }
 
     formatCurrency(amount) {
+
         return new Intl.NumberFormat('ru-RU', {
             style: 'currency',
             currency: 'RUB',
             minimumFractionDigits: 0
-        }).format(amount);
+        }).format(amount || 0);
     }
 }
 
-const subscriptionsManager = new SubscriptionsManager();
+const subscriptionsManager =
+    new SubscriptionsManager();
