@@ -1,19 +1,40 @@
 class App {
 
     constructor() {
-
-        this.initEvents();
-
-        authManager.checkAuth();
+        this.init();
     }
 
-    initEvents() {
+    init() {
 
-        // Вход
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => {
+                this.bindEvents();
+                authManager.checkAuth();
+            }
+        );
+    }
 
-        document
-            .getElementById("loginBtn")
-            .addEventListener("click", () => {
+    bindEvents() {
+
+        const loginBtn =
+            document.getElementById("loginBtn");
+
+        const logoutBtn =
+            document.getElementById("logoutBtn");
+
+        const saleBtn =
+            document.getElementById("addSaleBtn");
+
+        const closeModal =
+            document.querySelector(".close");
+
+        const saleForm =
+            document.getElementById("saleForm");
+
+        loginBtn?.addEventListener(
+            "click",
+            () => {
 
                 const password =
                     document.getElementById(
@@ -21,147 +42,138 @@ class App {
                     ).value;
 
                 authManager.login(password);
+            }
+        );
 
-            });
+        logoutBtn?.addEventListener(
+            "click",
+            () => authManager.logout()
+        );
 
-        // Enter
-
-        document
-            .getElementById("passwordInput")
-            .addEventListener("keypress", e => {
-
-                if (e.key === "Enter") {
-
-                    document
-                        .getElementById("loginBtn")
-                        .click();
-                }
-
-            });
-
-        // Выход
-
-        document
-            .getElementById("logoutBtn")
-            .addEventListener("click", () => {
-
-                authManager.logout();
-
-            });
-
-        // Навигация
-
-        document
-            .querySelectorAll(".nav-btn")
+        document.querySelectorAll(".nav-btn")
             .forEach(btn => {
 
-                btn.addEventListener("click", () => {
-
-                    this.switchTab(
-                        btn.dataset.tab,
-                        btn
-                    );
-
-                });
+                btn.addEventListener(
+                    "click",
+                    (e) => this.switchTab(e)
+                );
 
             });
 
-        // Продажа
+        saleBtn?.addEventListener(
+            "click",
+            () => {
+                document.getElementById(
+                    "saleModal"
+                ).classList.remove("hidden");
+            }
+        );
 
-        document
-            .getElementById("addSaleBtn")
-            .addEventListener("click", () => {
+        closeModal?.addEventListener(
+            "click",
+            () => {
+                document.getElementById(
+                    "saleModal"
+                ).classList.add("hidden");
+            }
+        );
 
-                document
-                    .getElementById("saleModal")
-                    .classList.remove("hidden");
-
-            });
-
-        // Закрытие модалки
-
-        document
-            .querySelector(".close")
-            .addEventListener("click", () => {
-
-                document
-                    .getElementById("saleModal")
-                    .classList.add("hidden");
-
-            });
-
-        // Сохранение продажи
-
-        document
-            .getElementById("saleForm")
-            .addEventListener("submit", async e => {
+        saleForm?.addEventListener(
+            "submit",
+            async (e) => {
 
                 e.preventDefault();
 
                 const saleData = {
 
                     date:
-                        document.getElementById("saleDate").value,
+                        document.getElementById(
+                            "saleDate"
+                        ).value,
 
                     amount:
                         Number(
-                            document.getElementById("saleAmount").value
+                            document.getElementById(
+                                "saleAmount"
+                            ).value
                         ),
 
                     status:
-                        document.getElementById("saleStatus").value,
+                        document.getElementById(
+                            "saleStatus"
+                        ).value,
 
                     nightShift:
-                        document.getElementById("nightShift").checked,
+                        document.getElementById(
+                            "nightShift"
+                        ).checked,
 
                     dialogLink:
-                        document.getElementById("dialogLink").value
-
+                        document.getElementById(
+                            "dialogLink"
+                        ).value
                 };
 
                 await salesManager.addSale(saleData);
 
-                document
-                    .getElementById("saleModal")
-                    .classList.add("hidden");
+                document.getElementById(
+                    "saleModal"
+                ).classList.add("hidden");
 
-                document
-                    .getElementById("saleForm")
-                    .reset();
+                saleForm.reset();
+            }
+        );
 
-            });
+        setInterval(() => {
 
+            if (dashboardManager) {
+                dashboardManager.updateStats();
+            }
+
+            if (salesManager) {
+                salesManager.loadSales();
+            }
+
+            if (subscriptionsManager) {
+                subscriptionsManager.loadSubscriptions();
+            }
+
+            if (salaryManager) {
+                salaryManager.loadSalaryHistory();
+            }
+
+        }, 30000);
     }
 
-    switchTab(tabName, button) {
+    switchTab(e) {
 
-        document
-            .querySelectorAll(".tab-content")
-            .forEach(tab => {
+        const tabName =
+            e.target.dataset.tab;
 
-                tab.classList.remove("active");
+        document.querySelectorAll(".tab-content")
+            .forEach(t =>
+                t.classList.remove("active")
+            );
 
-            });
+        const tab =
+            document.getElementById(tabName);
 
-        document
-            .querySelectorAll(".nav-btn")
-            .forEach(btn => {
+        if (tab) {
+            tab.classList.add("active");
+        }
 
-                btn.classList.remove("active");
+        document.querySelectorAll(".nav-btn")
+            .forEach(b =>
+                b.classList.remove("active")
+            );
 
-            });
-
-        document
-            .getElementById(tabName)
-            .classList.add("active");
-
-        button.classList.add("active");
+        e.target.classList.add("active");
 
         switch (tabName) {
 
             case "dashboard":
                 dashboardManager.updateStats();
-                break;
+              break;
 
             case "sales":
                 salesManager.loadSales();
@@ -178,4 +190,4 @@ class App {
     }
 }
 
-const salesTrackerApp = new App();
+window.app = new App();  
