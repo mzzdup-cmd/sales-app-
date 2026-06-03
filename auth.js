@@ -4,55 +4,60 @@ class AuthManager {
         this.password = "1234";
     }
 
-    login(password) {
+    login(inputPassword) {
 
-        if (password === this.password) {
-
-            localStorage.setItem("isAuthenticated", "true");
-
-            this.showMainApp();
-
-            return true;
+        if (inputPassword !== this.password) {
+            alert("Неверный пароль");
+            return;
         }
 
-        alert("Неверный пароль");
+        localStorage.setItem("auth", "true");
 
-        return false;
+        this.showMainApp();
+
+        setTimeout(() => {
+
+            if (window.dashboardManager) {
+                dashboardManager.updateStats();
+            }
+
+            if (window.salesManager) {
+                salesManager.loadSales();
+            }
+
+        }, 300);
     }
 
     logout() {
 
-        localStorage.removeItem("isAuthenticated");
+        localStorage.removeItem("auth");
 
-        document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("mainApp")
+        document.getElementById("mainApp")
             .classList.add("hidden");
+
+        document.getElementById("loginScreen")
+            .classList.remove("hidden");
     }
 
     checkAuth() {
 
-        const auth =
-            localStorage.getItem("isAuthenticated");
+        const ok =
+            localStorage.getItem("auth") === "true";
 
-        if (auth === "true") {
+        if (ok) {
             this.showMainApp();
         }
     }
 
     showMainApp() {
 
-        document
-            .getElementById("loginScreen")
+        document.getElementById("loginScreen")
             .classList.add("hidden");
 
-        document
-            .getElementById("mainApp")
+        document.getElementById("mainApp")
             .classList.remove("hidden");
     }
 }
 
-const authManager = new AuthManager();
+const authManager =
+    new AuthManager();
