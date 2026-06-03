@@ -74,7 +74,9 @@ class SalesManager {
             <div class="sale-card">
 
                 <p>
-                    💰 <strong>${this.formatCurrency(sale.amount || 0)}</strong>
+                    💰 <strong>
+                        ${this.formatCurrency(sale.amount || 0)}
+                    </strong>
                 </p>
 
                 <p>
@@ -85,13 +87,16 @@ class SalesManager {
                     🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}
                 </p>
 
-                ${
-                    sale.dialogLink
-                        ? <p>🔗 <a href="${sale.dialogLink}" target="_blank">Открыть диалог</a></p>
-                        : ""
-                }
+                ${sale.dialogLink ? `
+                    <p>
+                        🔗 <a href="${sale.dialogLink}" target="_blank">
+                            Открыть диалог
+                        </a>
+                    </p>
+                ` : ""}
 
-                <button class="delete-btn" onclick="salesManager.deleteSale('${sale.id}')">
+                <button class="delete-btn"
+                    onclick="salesManager.deleteSale('${sale.id}')">
                     Удалить
                 </button>
 
@@ -103,7 +108,6 @@ class SalesManager {
         try {
             const docRef = await db.collection("sales").add(saleData);
 
-            // если подписка
             if (saleData.status === "Подписная") {
                 await db.collection("subscriptions").add({
                     clientNick: "Клиент",
@@ -130,10 +134,8 @@ class SalesManager {
 
         try {
             await db.collection("sales").doc(saleId).delete();
-
             await this.loadSales();
             dashboardManager.updateStats();
-
         } catch (error) {
             console.error("Ошибка удаления:", error);
         }
@@ -144,12 +146,11 @@ class SalesManager {
             style: "currency",
             currency: "RUB",
             minimumFractionDigits: 0
-        }).format(amount);
+        }).format(amount || 0);
     }
 }
 
 const salesManager = new SalesManager();
-
 function toggleDay(date) {
     const el = document.getElementById(`day-${date}`);
     if (el) el.classList.toggle("hidden");
