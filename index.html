@@ -1,1 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Экран входа -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <h2>Вход в систему</h2>
+            <input type="password" id="passwordInput" placeholder="Введите пароль">
+            <button id="loginBtn">Войти</button>
+        </div>
+    </div>
 
+    <!-- Основной интерфейс -->
+    <div id="mainApp" class="screen hidden">
+        <!-- Шапка -->
+        <header class="app-header">
+            <h1>Sales Tracker</h1>
+            <button id="logoutBtn">Выйти</button>
+        </header>
+
+        <!-- Навигация -->
+        <nav class="app-nav">
+            <button class="nav-btn active" data-tab="dashboard">Дашборд</button>
+            <button class="nav-btn" data-tab="sales">Продажи</button>
+            <button class="nav-btn" data-tab="subscriptions">Подписки</button>
+            <button class="nav-btn" data-tab="salary">Зарплата</button>
+        </nav>
+
+        <!-- Контент -->
+        <main class="app-content">
+            <!-- Дашборд -->
+            <div id="dashboard" class="tab-content active">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <h3>Выручка</h3>
+                        <p id="totalRevenue">0 ₽</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Выполнение плана</h3>
+                        <p id="planProgress">0%</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>До плана</h3>
+                        <p id="remainingToPlan">0 ₽</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Прогноз зарплаты</h3>
+                        <p id="salaryForecast">0 ₽</p>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <canvas id="planChart"></canvas>
+                    <canvas id="salesChart"></canvas>
+                </div>
+
+                <div class="salary-forecast">
+                    <h3>Моя зарплата</h3>
+                    <p>Текущая: <span id="currentSalary">0 ₽</span></p>
+                    <p>Если выполнить план 100%: <span id="fullPlanSalary">0 ₽</span></p>
+                    <p>До следующего бонуса: <span id="bonusProgress">0 ₽</span></p>
+                </div>
+            </div>
+
+            <!-- Продажи -->
+            <div id="sales" class="tab-content">
+                <button id="addSaleBtn" class="primary-btn">Добавить продажу</button>
+                <div id="salesList"></div>
+            </div>
+
+            <!-- Подписки -->
+            <div id="subscriptions" class="tab-content">
+                <table id="subscriptionsTable">
+                    <thead>
+                        <tr>
+                            <th>Ссылка</th>
+                            <th>Ник</th>
+                            <th>Формат</th>
+                            <th>Дата 1-го платежа</th>
+                            <th>Платежи</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Зарплата -->
+            <div id="salary" class="tab-content">
+                <table id="salaryHistory">
+                    <thead>
+                        <tr>
+                            <th>Месяц</th>
+                            <th>Выручка</th>
+                            <th>Оклад</th>
+                            <th>% с продаж</th>
+                            <th>Бонусы</th>
+                            <th>Итого</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <canvas id="salaryChart"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="saleModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Добавить продажу</h3>
+            <form id="saleForm">
+                <input type="date" id="saleDate" required>
+                <label><input type="checkbox" id="nightShift"> Ночная смена</label>
+                <input type="number" id="saleAmount" placeholder="Сумма" required>
+                <select id="saleStatus" required>
+                    <option value="Полная">Полная</option>
+                    <option value="Подписная">Подписная</option>
+                    <option value="ББ">ББ</option>
+                    <option value="Доплата">Доплата</option>
+                </select>
+                <input type="url" id="dialogLink" placeholder="Ссылка на диалог">
+                <button type="submit" class="primary-btn">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="sales.js"></script>
+    <script src="subscriptions.js"></script>
+    <script src="salary.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
