@@ -290,5 +290,11 @@ class SubscriptionsManager {
     }
 }
 
+<button id="addSubscriptionBtn" class="primary-btn">
+    Добавить подписку
+</button> <button id="addSubscriptionBtn" class="primary-btn">
+    Добавить подписку
+</button>
+
 const subscriptionsManager =
     new SubscriptionsManager();
