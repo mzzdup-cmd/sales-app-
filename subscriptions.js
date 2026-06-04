@@ -176,7 +176,7 @@ class SubscriptionsManager {
                 ${dates.map((date, index) => {
 
                     const key =
-                        payment${index + 1};
+                        `payment${index + 1};`
 
                     const paid =
                         payments[key];
