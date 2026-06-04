@@ -129,6 +129,10 @@ class App {
                             document.getElementById(
                                 "saleStatus"
                             ).value,
+                        clientName:
+    document.getElementById(
+        "clientName"
+    ).value,
 
                         nightShift:
                             document.getElementById(
