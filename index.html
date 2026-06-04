@@ -7,24 +7,22 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Экран входа -->
+    <!-- Вход -->
     <div id="loginScreen" class="screen">
         <div class="login-container">
-            <h2>Вход в систему</h2>
+            <h2>Вход</h2>
             <input type="password" id="passwordInput" placeholder="Введите пароль">
-            <button id="loginBtn">Войти</button>
+            <button id="loginBtn" class="primary-btn">Войти</button>
         </div>
     </div>
 
     <!-- Основной интерфейс -->
     <div id="mainApp" class="screen hidden">
-        <!-- Шапка -->
         <header class="app-header">
             <h1>Sales Tracker</h1>
-            <button id="logoutBtn">Выйти</button>
+            <button id="logoutBtn" class="primary-btn">Выйти</button>
         </header>
 
-        <!-- Навигация -->
         <nav class="app-nav">
             <button class="nav-btn active" data-tab="dashboard">Дашборд</button>
             <button class="nav-btn" data-tab="sales">Продажи</button>
@@ -32,8 +30,8 @@
             <button class="nav-btn" data-tab="salary">Зарплата</button>
         </nav>
 
-        <!-- Контент -->
         <main class="app-content">
+
             <!-- Дашборд -->
             <div id="dashboard" class="tab-content active">
                 <div class="stats-cards">
@@ -56,16 +54,9 @@
                 </div>
 
                 <div class="charts-container">
-
-    <div class="chart-box">
-        <canvas id="planChart"></canvas>
-    </div>
-
-    <div class="chart-box">
-        <canvas id="salesChart"></canvas>
-    </div>
-
-</div>
+                    <div class="chart-box"><canvas id="planChart"></canvas></div>
+                    <div class="chart-box"><canvas id="salesChart"></canvas></div>
+                </div>
 
                 <div class="salary-forecast">
                     <h3>Моя зарплата</h3>
@@ -77,35 +68,30 @@
 
             <!-- Продажи -->
             <div id="sales" class="tab-content">
-                <button id="addSaleBtn" class="primary-btn">Добавить продажу</button>
+                <div class="sales-controls">
+                    <button id="addSaleBtn" class="primary-btn">Добавить продажу</button>
+                </div>
                 <div id="salesList"></div>
             </div>
 
+            <!-- Подписки -->
             <div id="subscriptions" class="tab-content">
+                <div class="subscription-stats"></div>
+                <table id="subscriptionsTable">
+                    <thead>
+                        <tr>
+                            <th>Ссылка</th>
+                            <th>Ник</th>
+                            <th>Формат</th>
+                            <th>Дата 1-го платежа</th>
+                            <th>Платежи</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
 
-    <div style="margin-bottom:15px;">
-        <button id="addSubscriptionBtn" class="primary-btn">
-            Добавить подписку
-        </button>
-    </div>
-
-    <div class="subscription-stats"></div>
-
-    <table id="subscriptionsTable">
-        <thead>
-            <tr>
-                <th>Ссылка</th>
-                <th>Ник</th>
-                <th>Формат</th>
-                <th>Дата 1-го платежа</th>
-                <th>Платежи</th>
-                <th>Статус</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-</div>
             <!-- Зарплата -->
             <div id="salary" class="tab-content">
                 <table id="salaryHistory">
@@ -121,12 +107,15 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <canvas id="salaryChart"></canvas>
+                <div class="salary-charts">
+                    <canvas id="salaryChart"></canvas>
+                </div>
             </div>
+
         </main>
     </div>
 
-    <!-- Модальные окна -->
+    <!-- Модальное окно добавления продажи -->
     <div id="saleModal" class="modal hidden">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -148,22 +137,21 @@
     </div>
 
     <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Firebase config (ПЕРВЫМ) -->
-<script src="firebase-config.js"></script>
+    <!-- Конфиг Firebase -->
+    <script src="firebase-config.js"></script>
 
-<!-- Модули (СТРОГО В ЭТОМ ПОРЯДКЕ) -->
-<script src="auth.js"></script>
-<script src="dashboard.js"></script>
-<script src="sales.js"></script>
-<script src="subscriptions.js"></script>
-<script src="salary.js"></script>
+    <!-- Модули -->
+    <script src="auth.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="sales.js"></script>
+    <script src="subscriptions.js"></script>
+    <script src="salary.js"></script>
 
-<!-- App (ПОСЛЕДНИМ) -->
-<script src="app.js"></script>
-
+    <!-- App -->
+    <script src="app.js"></script>
 </body>
 </html>
