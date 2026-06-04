@@ -128,6 +128,9 @@ class SalesManager {
             <div class="sale-card">
 
                 <div class="sale-top">
+                <div class="sale-client">
+    ${sale.clientName || "Без имени"}
+</div>
 
                     <div class="sale-price">
                         ${this.formatCurrency(
