@@ -394,7 +394,7 @@ class SubscriptionsManager {
         for (let i = 0; i < dates.length; i++) {
 
             const key =
-                payment${i + 1};
+                `payment${i + 1};`
 
             const paid =
                 payments[key];
