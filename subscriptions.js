@@ -1,5 +1,10 @@
 class SubscriptionsManager {
+    constructor() {
 
+    this.currentStatus =
+        "Активна";
+}
+    
     async loadSubscriptions() {
 
         try {
@@ -56,6 +61,13 @@ class SubscriptionsManager {
                 ) {
                     lost++;
                 }
+                if (
+    subscription.status !==
+    this.currentStatus
+) {
+    return;
+}
+                
 
                 if (
                     subscription.status ===
@@ -459,6 +471,35 @@ class SubscriptionsManager {
         ).format(amount || 0);
     }
 }
+document.addEventListener(
+    "click",
+    (e) => {
+
+        if (
+            !e.target.classList.contains(
+                "sub-tab"
+            )
+        ) return;
+
+        document
+            .querySelectorAll(".sub-tab")
+            .forEach(btn => {
+
+                btn.classList.remove(
+                    "active"
+                );
+            });
+
+        e.target.classList.add(
+            "active"
+        );
+
+        subscriptionsManager.currentStatus =
+            e.target.dataset.status;
+
+        subscriptionsManager.loadSubscriptions();
+    }
+);
 
 const subscriptionsManager =
     new SubscriptionsManager();
