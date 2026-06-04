@@ -14,9 +14,4 @@ const firebaseConfig = {
 const firebaseApp = firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
-
-// Настройки Firestore
-
-db.settings({
-    merge: true
 });
