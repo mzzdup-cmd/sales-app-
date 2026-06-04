@@ -304,6 +304,53 @@ class App {
         }
     }
 }
+// ADD SUBSCRIPTION BUTTON
 
+document.addEventListener(
+    "click",
+    async (e) => {
+
+        if (
+            e.target.id !==
+            "addSubscriptionBtn"
+        ) return;
+
+        try {
+
+            await db
+                .collection("subscriptions")
+                .add({
+
+                    clientNick:
+                        "Новый клиент",
+
+                    dialogLink: "",
+
+                    format:
+                        "2/6",
+
+                    firstPaymentDate:
+                        new Date()
+                            .toISOString()
+                            .split("T")[0],
+
+                    payments: {},
+
+                    status:
+                        "Активна"
+                });
+
+            subscriptionsManager
+                ?.loadSubscriptions();
+
+        } catch (error) {
+
+            console.error(
+                "Subscription add error:",
+                error
+            );
+        }
+    }
+);
 window.app = new App();
                                 
