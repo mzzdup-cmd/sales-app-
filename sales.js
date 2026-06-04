@@ -321,8 +321,8 @@ function toggleDay(date) {
 
     const el =
         document.getElementById(
-            day-${date}
-        );
+    `day-${date}`
+);
 
     if (!el) return;
 
