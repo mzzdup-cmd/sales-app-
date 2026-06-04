@@ -33,6 +33,7 @@ class SalesManager {
 
     renderSales(salesByDay) {
         const container = document.getElementById("salesList");
+
         if (!container) return;
 
         container.innerHTML = "";
@@ -49,6 +50,7 @@ class SalesManager {
         }
 
         dates.forEach(date => {
+
             const sales = salesByDay[date];
 
             const block = document.createElement("div");
@@ -87,15 +89,21 @@ class SalesManager {
                     🌙 Ночная: ${sale.nightShift ? "Да" : "Нет"}
                 </p>
 
-                ${sale.dialogLink ? `
-                    <p>
-                        🔗 <a href="${sale.dialogLink}" target="_blank">
-                            Открыть диалог
-                        </a>
-                    </p>
-                ` : ""}
+                ${
+                    sale.dialogLink
+                        ? `
+                        <p>
+                            🔗
+                            <a href="${sale.dialogLink}" target="_blank">
+                                Открыть диалог
+                            </a>
+                        </p>
+                    `
+                        : ""
+                }
 
-                <button class="delete-btn"
+                <button
+                    class="delete-btn"
                     onclick="salesManager.deleteSale('${sale.id}')">
                     Удалить
                 </button>
@@ -106,9 +114,12 @@ class SalesManager {
 
     async addSale(saleData) {
         try {
-            const docRef = await db.collection("sales").add(saleData);
+
+            const docRef =
+                await db.collection("sales").add(saleData);
 
             if (saleData.status === "Подписная") {
+
                 await db.collection("subscriptions").add({
                     clientNick: "Клиент",
                     dialogLink: saleData.dialogLink || "",
@@ -121,7 +132,10 @@ class SalesManager {
             }
 
             await this.loadSales();
-            dashboardManager.updateStats();
+
+            if (window.dashboardManager) {
+                dashboardManager.updateStats();
+            }
 
         } catch (error) {
             console.error("Ошибка сохранения:", error);
@@ -129,29 +143,48 @@ class SalesManager {
     }
 
     async deleteSale(saleId) {
-        const confirmed = confirm("Удалить продажу?");
+
+        const confirmed =
+            confirm("Удалить продажу?");
+
         if (!confirmed) return;
 
         try {
-            await db.collection("sales").doc(saleId).delete();
+
+            await db
+                .collection("sales")
+                .doc(saleId)
+                .delete();
+
             await this.loadSales();
-            dashboardManager.updateStats();
+
+            if (window.dashboardManager) {
+                dashboardManager.updateStats();
+            }
+
         } catch (error) {
             console.error("Ошибка удаления:", error);
         }
     }
 
     formatCurrency(amount) {
-        return new Intl.NumberFormat("ru-RU", {
-            style: "currency",
-            currency: "RUB",
-            minimumFractionDigits: 0
-        }).format(amount || 0);
+        return new Intl.NumberFormat(
+            "ru-RU",
+            {
+                style: "currency",
+                currency: "RUB",
+                minimumFractionDigits: 0
+            }
+        ).format(amount || 0);
     }
 }
 
 const salesManager = new SalesManager();
+
 function toggleDay(date) {
     const el = document.getElementById(`day-${date}`);
-    if (el) el.classList.toggle("hidden");
+
+    if (el) {
+        el.classList.toggle("hidden");
+    }
 }
