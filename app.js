@@ -1,136 +1,309 @@
 class App {
+
     constructor() {
-        this.init();
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => {
+
+                this.bindEvents();
+
+                this.initApp();
+            }
+        );
     }
 
-    init() {
-        document.addEventListener("DOMContentLoaded", () => {
-            this.bindEvents();
-            this.safeInit();
-        });
-    }
+    initApp() {
 
-    safeInit() {
         try {
-            authManager?.checkAuth();
-        } catch (e) {
-            console.error("Auth init error:", e);
-        }
 
-        // Первичная загрузка данных
-        this.refreshAll();
+            authManager?.checkAuth();
+
+            this.refreshAll();
+
+        } catch (error) {
+
+            console.error(
+                "Init error:",
+                error
+            );
+        }
     }
 
     bindEvents() {
-        const loginBtn = document.getElementById("loginBtn");
-        const logoutBtn = document.getElementById("logoutBtn");
-        const saleBtn = document.getElementById("addSaleBtn");
-        const closeModal = document.querySelector(".close");
-        const saleForm = document.getElementById("saleForm");
-        const addSubscriptionBtn = document.getElementById("addSubscriptionBtn");
 
-        // Вход
-        loginBtn?.addEventListener("click", () => {
-            const password = document.getElementById("passwordInput")?.value || "";
-            authManager?.login(password);
-        });
+        // LOGIN
 
-        // Выход
-        logoutBtn?.addEventListener("click", () => {
-            authManager?.logout();
-        });
+        document
+            .getElementById("loginBtn")
+            ?.addEventListener(
+                "click",
+                () => {
 
-        // Навигация по вкладкам
-        document.querySelectorAll(".nav-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => this.switchTab(e));
-        });
+                    const password =
+                        document.getElementById(
+                            "passwordInput"
+                        ).value || "";
 
-        // Модальное окно продаж
-        saleBtn?.addEventListener("click", () => {
-            document.getElementById("saleModal")?.classList.remove("hidden");
-        });
+                    authManager?.login(password);
+                }
+            );
 
-        closeModal?.addEventListener("click", () => {
-            document.getElementById("saleModal")?.classList.add("hidden");
-        });
+        // LOGOUT
 
-        // Добавление продажи
-        saleForm?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            if (!salesManager) return;
+        document
+            .getElementById("logoutBtn")
+            ?.addEventListener(
+                "click",
+                () => {
 
-            const saleData = {
-                date: document.getElementById("saleDate")?.value,
-                amount: Number(document.getElementById("saleAmount")?.value || 0),
-                status: document.getElementById("saleStatus")?.value,
-                nightShift: document.getElementById("nightShift")?.checked,
-                dialogLink: document.getElementById("dialogLink")?.value
-            };
+                    authManager?.logout();
+                }
+            );
 
-            await salesManager.addSale(saleData);
+        // NAVIGATION
 
-            document.getElementById("saleModal")?.classList.add("hidden");
-            saleForm.reset();
-        });
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(btn => {
 
-        // Добавление подписки вручную
-        addSubscriptionBtn?.addEventListener("click", async () => {
-            if (!subscriptionsManager) return;
-            await db.collection("subscriptions").add({
-                clientNick: "Новый клиент",
-                dialogLink: "",
-                format: "2/6",
-                firstPaymentDate: new Date().toISOString(),
-                payments: {},
-                status: "Активна"
+                btn.addEventListener(
+                    "click",
+                    e => this.switchTab(e)
+                );
             });
-            await subscriptionsManager.loadSubscriptions();
-        });
 
-        // Автообновление каждые 30 секунд
-        setInterval(() => this.refreshAll(), 30000);
+        // OPEN SALE MODAL
+
+        document
+            .getElementById("addSaleBtn")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .getElementById("saleModal")
+                        ?.classList.remove("hidden");
+                }
+            );
+
+        // CLOSE MODAL
+
+        document
+            .querySelector(".close")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .getElementById("saleModal")
+                        ?.classList.add("hidden");
+                }
+            );
+
+        // SUBMIT SALE
+
+        document
+            .getElementById("saleForm")
+            ?.addEventListener(
+                "submit",
+                async e => {
+
+                    e.preventDefault();
+
+                    const saleData = {
+
+                        date:
+                            document.getElementById(
+                                "saleDate"
+                            ).value,
+
+                        amount:
+                            Number(
+                                document.getElementById(
+                                    "saleAmount"
+                                ).value || 0
+                            ),
+
+                        status:
+                            document.getElementById(
+                                "saleStatus"
+                            ).value,
+
+                        nightShift:
+                            document.getElementById(
+                                "nightShift"
+                            ).checked,
+
+                        dialogLink:
+                            document.getElementById(
+                                "dialogLink"
+                            ).value || ""
+                    };
+
+                    await salesManager?.addSale(
+                        saleData
+                    );
+
+                    document
+                        .getElementById("saleModal")
+                        ?.classList.add("hidden");
+
+                    document
+                        .getElementById("saleForm")
+                        ?.reset();
+                }
+            );
+
+        // ADD SUBSCRIPTION
+
+        document
+            .getElementById("addSubscriptionBtn")
+            ?.addEventListener(
+                "click",
+                async () => {
+
+                    try {
+
+                        await db
+                            .collection("subscriptions")
+                            .add({
+
+                                clientNick:
+                                    "Новый клиент",
+                                dialogLink: "",
+
+                                format:
+                                    "2/6",
+
+                                firstPaymentDate:
+                                    new Date()
+                                        .toISOString()
+                                        .split("T")[0],
+
+                                payments: {},
+
+                                status:
+                                    "Активна"
+                            });
+
+                        subscriptionsManager
+                            ?.loadSubscriptions();
+
+                    } catch (error) {
+
+                        console.error(
+                            "Subscription add error:",
+                            error
+                        );
+                    }
+                }
+            );
+
+        // AUTO REFRESH
+
+        setInterval(
+            () => {
+
+                this.refreshAll();
+
+            },
+            30000
+        );
     }
 
     refreshAll() {
+
         try {
-            dashboardManager?.updateStats();
-            salesManager?.loadSales();
-            subscriptionsManager?.loadSubscriptions();
-            salaryManager?.loadSalaryHistory();
-        } catch (e) {
-            console.error("Auto refresh error:", e);
+
+            dashboardManager
+                ?.updateStats();
+
+            salesManager
+                ?.loadSales();
+
+            subscriptionsManager
+                ?.loadSubscriptions();
+
+            salaryManager
+                ?.loadSalaryHistory();
+
+        } catch (error) {
+
+            console.error(
+                "Refresh error:",
+                error
+            );
         }
     }
 
     switchTab(e) {
-        const tabName = e.target.dataset.tab;
 
-        // Скрыть все вкладки
-        document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
-        const tab = document.getElementById(tabName);
-        if (tab) tab.classList.add("active");
+        const tabName =
+            e.target.dataset.tab;
 
-        // Обновить активность кнопок
-        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        // remove active
+
+        document
+            .querySelectorAll(".tab-content")
+            .forEach(tab => {
+
+                tab.classList.remove(
+                    "active"
+                );
+            });
+
+        document
+            .querySelectorAll(".nav-btn")
+            .forEach(btn => {
+
+                btn.classList.remove(
+                    "active"
+                );
+            });
+
+        // activate
+
+        document
+            .getElementById(tabName)
+            ?.classList.add("active");
+
         e.target.classList.add("active");
 
-        // Обновление данных конкретной вкладки
+        // refresh tab
+
         switch (tabName) {
+
             case "dashboard":
-                dashboardManager?.updateStats();
+
+                dashboardManager
+                    ?.updateStats();
+
                 break;
+
             case "sales":
-                salesManager?.loadSales();
+
+                salesManager
+                    ?.loadSales();
+
                 break;
-                case "subscriptions":
-                subscriptionsManager?.loadSubscriptions();
+
+            case "subscriptions":
+
+                subscriptionsManager
+                    ?.loadSubscriptions();
+
                 break;
+
             case "salary":
-                salaryManager?.loadSalaryHistory();
+
+                salaryManager
+                    ?.loadSalaryHistory();
+
                 break;
         }
     }
 }
 
-// Инициализация приложения
 window.app = new App();
+                                
