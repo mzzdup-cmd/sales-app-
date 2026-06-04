@@ -1,72 +1,207 @@
 class SalaryManager {
+
+    constructor() {
+
+        this.salaryChart = null;
+    }
+
     async loadSalaryHistory() {
-        const snapshot = await db.collection('salaryHistory').orderBy('month', 'desc').get();
-        const tableBody = document.querySelector('#salaryHistory tbody');
-        tableBody.innerHTML = '';
 
-        snapshot.docs.forEach(doc => {
-            const salary = doc.data();
-            const row = this.createSalaryRow(salary);
-            tableBody.appendChild(row);
-        });
+        try {
 
-        this.updateSalaryCharts();
+            const snapshot =
+                await db
+                    .collection("salaryHistory")
+                    .orderBy("month", "asc")
+                    .get();
+
+            const tableBody =
+                document.querySelector(
+                    "#salaryHistory tbody"
+                );
+
+            if (!tableBody) return;
+
+            tableBody.innerHTML = "";
+
+            const rows = [];
+
+            snapshot.docs.forEach(doc => {
+
+                const salary = {
+                    id: doc.id,
+                    ...doc.data()
+                };
+
+                rows.push(salary);
+
+                tableBody.innerHTML += `
+                    <tr>
+
+                        <td>
+                            ${salary.month || "-"}
+                        </td>
+
+                        <td>
+                            ${this.formatCurrency(
+                                salary.revenue
+                            )}
+                        </td>
+
+                        <td>
+                            ${this.formatCurrency(
+                                salary.baseSalary
+                            )}
+                        </td>
+
+                        <td>
+                            ${this.formatCurrency(
+                                salary.commission
+                            )}
+                        </td>
+
+                        <td>
+                            ${this.formatCurrency(
+                                salary.bonus
+                            )}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${this.formatCurrency(
+                                    salary.total
+                                )}
+                            </strong>
+                        </td>
+
+                    </tr>
+                `;
+            });
+
+            this.renderChart(rows);
+
+        } catch (error) {
+
+            console.error(
+                "Salary error:",
+                error
+            );
+        }
     }
 
-    createSalaryRow(salary) {
-        const tr = document.createElement('tr');
+    renderChart(rows) {
 
-        tr.innerHTML = `
-            <td>${salary.month}</td>
-            <td>${this.formatCurrency(salary.revenue)}</td>
-            <td>${this.formatCurrency(salary.baseSalary)}</td>
-            <td>${this.formatCurrency(salary.commission)}</td>
-            <td>${this.formatCurrency(salary.bonus)}</td>
-            <td>${this.formatCurrency(salary.total)}</td>`;
+        const canvas =
+            document.getElementById(
+                "salaryChart"
+            );
 
-        return tr;
-    }
+        if (!canvas) return;
 
-    async updateSalaryCharts() {
-        const snapshot = await db.collection('salaryHistory').get();
-        const salaries = snapshot.docs.map(doc => doc.data());
+        if (this.salaryChart) {
+            this.salaryChart.destroy();
+        }
 
-        // График выручки по месяцам
-        const months = salaries.map(s => s.month);
-        const revenues = salaries.map(s => s.revenue);
-        const totals = salaries.map(s => s.total);
+        this.salaryChart =
+            new Chart(canvas, {
 
-        new Chart(document.getElementById('salaryChart'), {
-            type: 'bar',
-            data: {
-                labels: months,
-                datasets: [
-                    {
-                label: 'Выручка',
-                data: revenues,
-                backgroundColor: '#4a6cf7'
-            },
-            {
-                label: 'Зарплата',
-                data: totals,
-                backgroundColor: '#38a169'
-            }
-        ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
+                type: "bar",
+
+                data: {
+
+                    labels:
+                        rows.map(
+                            r => r.month
+                        ),
+
+                    datasets: [
+
+                        {
+                            label: "Выручка",
+
+                            data:
+                                rows.map(
+                                    r => r.revenue || 0
+                                ),
+
+                            backgroundColor:
+                                "#3B82F6",
+
+                            borderRadius: 12
+                        },
+
+                        {
+                            label: "Зарплата",
+
+                            data:
+                                rows.map(
+                                    r => r.total || 0
+                                ),
+
+                            backgroundColor:
+                                "#10B981",
+
+                            borderRadius: 12
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+
+                            labels: {
+                                color: "#fff"
+                            }
+                        }
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            ticks: {
+                                color: "#94A3B8"
+                            },
+                            grid: {
+                                display: false
+                            }
+                        },
+
+                        y: {
+
+                            ticks: {
+                                color: "#94A3B8"
+                            },
+
+                            grid: {
+                                color:
+                                    "rgba(255,255,255,.05)"
+                            }
+                        }
+                    }
+                }
+            });
     }
 
     formatCurrency(amount) {
-        return new Intl.NumberFormat('ru-RU', {
-            style: 'currency',
-            currency: 'RUB',
-            minimumFractionDigits: 0
-        }).format(amount);
+
+        return new Intl.NumberFormat(
+            "ru-RU",
+            {
+                style: "currency",
+                currency: "RUB",
+                minimumFractionDigits: 0
+            }
+        ).format(amount || 0);
     }
 }
 
-const salaryManager = new SalaryManager();
+const salaryManager =
+    new SalaryManager();
