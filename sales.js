@@ -314,7 +314,6 @@ class SalesManager {
         ).format(amount || 0);
     }
 }
-
 const salesManager =
     new SalesManager();
 
