@@ -617,6 +617,38 @@ tr:last-child td{
 
     font-weight:700;
 }
+.sub-tabs{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:20px;
+    margin-bottom:20px;
+}
+
+.sub-tab{
+
+    border:none;
+
+    background:#1E293B;
+
+    color:#94A3B8;
+
+    padding:12px 18px;
+
+    border-radius:14px;
+
+    font-weight:600;
+}
+
+.sub-tab.active{
+
+    background:#3B82F6;
+
+    color:white;
+}
+
 
 /* ===== MODAL ===== */
 
