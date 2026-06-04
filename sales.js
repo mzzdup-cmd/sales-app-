@@ -199,7 +199,7 @@ class SalesManager {
                     .add({
 
                         clientNick:
-                            "Новый клиент",
+    saleData.clientName || "Клиент",
 
                         dialogLink:
                             saleData.dialogLink || "",
